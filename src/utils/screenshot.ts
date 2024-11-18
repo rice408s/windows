@@ -6,10 +6,12 @@ export const captureScreenshot = async (element: HTMLElement): Promise<string> =
     
     // 使用原生截图 API
     const stream = await navigator.mediaDevices.getDisplayMedia({
-      preferCurrentTab: true,
       video: {
         displaySurface: "browser",
-      }
+        width: { ideal: rect.width * scale },
+        height: { ideal: rect.height * scale }
+      },
+      audio: false
     });
 
     // 创建视频元素来捕获流
