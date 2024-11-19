@@ -179,7 +179,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.altKey && e.key.toLowerCase() === 't') {
+        e.preventDefault();
         setShowControls(prev => !prev);
         setShowThemeMenu(false);
       } else if (e.key === 'F11') {
@@ -289,7 +290,7 @@ const App: React.FC = () => {
               {themeNames[currentTheme]} ▼
             </ThemeButton>
             <KeyHint>
-              ESC: 显示/隐藏菜单<br />
+              Alt+T: 显示/隐藏菜单<br />
               F11: 切换全屏
             </KeyHint>
           </div>
