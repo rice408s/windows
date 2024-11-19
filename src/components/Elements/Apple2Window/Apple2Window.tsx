@@ -44,7 +44,7 @@ const MonitorFrame = styled.div`
     height: 10px;
     background: #333;
     box-shadow: 0 15px #333, 0 30px #333;
-    border-radius: 2px;
+    border-radius: 0;
   }
 
   &::after {
@@ -69,7 +69,7 @@ const Apple2Wrapper = styled.div`
   text-transform: uppercase;
   animation: ${powerOn} 3s ease-out;
   box-shadow: 0 0 20px rgba(64, 255, 64, 0.3);
-  border-radius: 20px;
+  border-radius: 0;
 
   &::before {
     content: '';
@@ -106,7 +106,7 @@ const Apple2Wrapper = styled.div`
         transparent 100%
       );
     pointer-events: none;
-    border-radius: 20px;
+    border-radius: 0;
   }
 `;
 

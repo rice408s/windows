@@ -117,11 +117,47 @@ export const GlobalStyles = createGlobalStyle`
           return 'system-ui, sans-serif';
       }
     }};
+    font-size: ${props => {
+      switch(props.theme.name) {
+        case 'dos':
+          return '18px';
+        case 'windows95':
+          return '16px';
+        case 'macintosh':
+          return '16px';
+        case 'amiga':
+          return '16px';
+        case 'atari':
+          return '16px';
+        case 'apple2':
+          return '18px';
+        case 'zxspectrum':
+          return '18px';
+        case 'msx':
+          return '18px';
+        case 'c64':
+          return '18px';
+        case 'trs80':
+          return '18px';
+        case 'bbcmicro':
+          return '18px';
+        case 'gameboy':
+          return '14px';
+        case 'nokia':
+          return '18px';
+        default:
+          return '16px';
+      }
+    }};
+    line-height: 1.5;
   }
 
   html, body, #root {
     width: 100%;
     height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
   }
 
   body {
@@ -160,9 +196,12 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   #root {
+    width: 100vw;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    position: relative;
+    overflow: hidden;
   }
 `; 

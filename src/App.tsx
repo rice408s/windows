@@ -30,7 +30,6 @@ import { bbcMicroTheme } from './styles/themes/bbcmicro';
 import { C64Window } from './components/Elements/C64Window/C64Window';
 import { TRS80Window } from './components/Elements/TRS80Window/TRS80Window';
 import { BBCMicroWindow } from './components/Elements/BBCMicroWindow/BBCMicroWindow';
-import { captureScreenshot, downloadScreenshot } from './utils/screenshot';
 
 const themes = {
   windows95: windows95Theme,
@@ -48,10 +47,55 @@ const themes = {
   bbcmicro: bbcMicroTheme
 };
 
-const ThemeButton = styled.button<{ $active?: boolean }>`
+const AppContainer = styled.div`
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+`;
+
+const WindowContainer = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+
+  & > * {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+
+  & > * {
+    padding: 0 !important;
+  }
+
+  & > * {
+    border: none !important;
+  }
+`;
+
+const ButtonContainer = styled.div<{ $visible: boolean }>`
   position: fixed;
+  right: 0;
   top: 20px;
-  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  z-index: 9999;
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateX(${props => props.$visible ? '0' : 'calc(100% + 20px)'});
+  transition: transform 0.3s ease;
+`;
+
+const ThemeButton = styled.button<{ $active?: boolean }>`
   padding: 8px 16px;
   background: ${props => props.$active ? '#000' : '#fff'};
   color: ${props => props.$active ? '#fff' : '#000'};
@@ -59,7 +103,7 @@ const ThemeButton = styled.button<{ $active?: boolean }>`
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
-  z-index: 9999;
+  white-space: nowrap;
   transition: all 0.3s ease;
 
   &:hover {
@@ -95,34 +139,19 @@ const ThemeOption = styled.button<{ $selected?: boolean }>`
   }
 `;
 
-const ScreenshotButton = styled.button`
-  position: fixed;
-  top: 20px;
-  right: 140px;
-  padding: 8px 16px;
-  background: #fff;
-  color: #000;
-  border: 2px solid #000;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: inherit;
-  z-index: 9999;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: scale(1.05);
-  }
-
-  &:active {
-    background: #000;
-    color: #fff;
-  }
+const KeyHint = styled.div`
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  margin-top: 4px;
 `;
 
 const App: React.FC = () => {
   const [currentTheme, setCurrentTheme] = useState<keyof typeof themes>('windows95');
   const [isOpen, setIsOpen] = useState(true);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const windowRef = useRef<HTMLDivElement>(null);
 
@@ -148,15 +177,28 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const handleScreenshot = async () => {
-    if (!windowRef.current) return;
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowControls(prev => !prev);
+        setShowThemeMenu(false);
+      } else if (e.key === 'F11') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `${currentTheme}-${timestamp}.png`;
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
-    const dataUrl = await captureScreenshot(windowRef.current);
-    if (dataUrl) {
-      downloadScreenshot(dataUrl, filename);
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
     }
   };
 
@@ -237,34 +279,41 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={themes[currentTheme]}>
       <GlobalStyles />
-      <ScreenshotButton onClick={handleScreenshot}>
-        📸 Screenshot
-      </ScreenshotButton>
-      <ThemeButton 
-        onClick={() => setShowThemeMenu(!showThemeMenu)}
-        $active={showThemeMenu}
-      >
-        {themeNames[currentTheme]} ▼
-      </ThemeButton>
-      {showThemeMenu && (
-        <ThemeMenu>
-          {Object.entries(themeNames).map(([key, name]) => (
-            <ThemeOption
-              key={key}
-              $selected={currentTheme === key}
-              onClick={() => {
-                setCurrentTheme(key as keyof typeof themes);
-                setShowThemeMenu(false);
-              }}
+      <AppContainer>
+        <ButtonContainer $visible={showControls}>
+          <div>
+            <ThemeButton 
+              onClick={() => setShowThemeMenu(!showThemeMenu)}
+              $active={showThemeMenu}
             >
-              {name}
-            </ThemeOption>
-          ))}
-        </ThemeMenu>
-      )}
-      <div ref={windowRef} data-screenshot>
-        {renderWindow()}
-      </div>
+              {themeNames[currentTheme]} ▼
+            </ThemeButton>
+            <KeyHint>
+              ESC: 显示/隐藏菜单<br />
+              F11: 切换全屏
+            </KeyHint>
+          </div>
+        </ButtonContainer>
+        {showThemeMenu && (
+          <ThemeMenu>
+            {Object.entries(themeNames).map(([key, name]) => (
+              <ThemeOption
+                key={key}
+                $selected={currentTheme === key}
+                onClick={() => {
+                  setCurrentTheme(key as keyof typeof themes);
+                  setShowThemeMenu(false);
+                }}
+              >
+                {name}
+              </ThemeOption>
+            ))}
+          </ThemeMenu>
+        )}
+        <WindowContainer ref={windowRef} data-screenshot>
+          {renderWindow()}
+        </WindowContainer>
+      </AppContainer>
     </ThemeProvider>
   );
 };
