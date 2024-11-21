@@ -59,11 +59,12 @@ const AppContainer = styled.div`
 
 const WindowContainer = styled.div`
   width: 100%;
-  height: 100%;
+  height: ${props => props.theme.$isFullscreen ? '100%' : 'calc(100% - 30px)'};
   display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
+  transition: height 0.3s ease;
 
   & > * {
     width: 100% !important;
@@ -146,6 +147,32 @@ const KeyHint = styled.div`
   margin-top: 4px;
 `;
 
+const Footer = styled.div<{ $isFullscreen: boolean }>`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: ${props => props.$isFullscreen ? '0' : '30px'};
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  z-index: 9999;
+`;
+
+const ICP = styled.a`
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  font-size: 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  
+  &:hover {
+    color: rgba(255, 255, 255, 0.9);
+  }
+`;
+
 const App: React.FC = () => {
   const [currentTheme, setCurrentTheme] = useState<keyof typeof themes>('windows95');
   const [isOpen, setIsOpen] = useState(true);
@@ -193,13 +220,26 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (err) {
+      console.error('Error attempting to toggle full-screen:', err);
     }
   };
 
@@ -278,7 +318,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <ThemeProvider theme={themes[currentTheme]}>
+    <ThemeProvider theme={{ ...themes[currentTheme], $isFullscreen: isFullscreen }}>
       <GlobalStyles />
       <AppContainer>
         <ButtonContainer $visible={showControls}>
@@ -314,6 +354,15 @@ const App: React.FC = () => {
         <WindowContainer ref={windowRef} data-screenshot>
           {renderWindow()}
         </WindowContainer>
+        <Footer $isFullscreen={isFullscreen}>
+          <ICP 
+            href="https://beian.miit.gov.cn/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
+            蜀ICP备2023035130号
+          </ICP>
+        </Footer>
       </AppContainer>
     </ThemeProvider>
   );
